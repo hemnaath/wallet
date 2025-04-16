@@ -1,0 +1,24 @@
+const Wallet = require('../model/walletModel');
+const Transaction = require('../model/transactionModel');
+const { validationResult } = require('express-validator');
+
+
+exports.transfer = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return LOG.info("Validation failed", { errors: errors.array()[0].msg }, res, false, 200);
+    const { amount, receiverWalletId } = req.body;
+    try{
+        const walletData = await Wallet.findById(req.user.wallet_id);
+        const receiverWallet = await Wallet.findById(receiverWalletId);
+        if (!receiverWallet) return LOG.info('Wallet not found', null, res, false, 200);
+        if (walletData.balance < amount) return LOG.info('Insufficient balance', null, res, false, 200);
+        walletData.balance -= amount;
+        receiverWallet.balance += amount;
+        await walletData.save();
+        await receiverWallet.save();
+        await Transaction.create({mode: 'transfer', amount, sender_wallet_id: req.user.wallet_id, reciever_wallet_id: receiverWalletId});
+        LOG.info('Transfer successful', { senderWalletId: req.user.wallet_id, receiverWalletId }, res, true, 200);
+    }catch(error){
+        LOG.error('Internal server error', null, error, res, false, 500);
+    }
+}

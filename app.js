@@ -4,12 +4,14 @@ require('dotenv').config();
 require('./utils/logger');
 const userRoute = require('./route/userRoute');
 const walletRoute = require('./route/walletRoute');
+const transactionRoute = require('./route/transactionRoute');
 
 const app = express();
 app.use(express.json());
 
 app.use('/api', userRoute);
 app.use('/api', walletRoute);
+app.use('/api', transactionRoute);
 
 
 app.listen(1731, ()=>{
