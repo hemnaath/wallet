@@ -22,3 +22,20 @@ exports.transfer = async (req, res) => {
         LOG.error('Internal server error', null, error, res, false, 500);
     }
 }
+
+exports.withdraw = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return LOG.info("Validation failed", { errors: errors.array()[0].msg }, res, false, 200);
+    const { amount } = req.body;
+    try{
+        const walletData = await Wallet.findById(req.user.wallet_id);
+        if (!walletData) return LOG.info('Wallet not found', null, res, false, 200);
+        if (walletData.balance < amount) return LOG.info('Insufficient balance', null, res, false, 200);
+        walletData.balance -= req.body.amount;
+        await walletData.save();
+        await Transaction.create({mode: 'withdraw', amount: req.body.amount, sender_wallet_id: req.user.wallet_id});
+        LOG.info('Withdraw successful', { walletId: req.user.wallet_id }, res, true, 200);
+    }catch(error){
+        LOG.error('Internal server error', null, error, res, false, 500);
+    }
+}
