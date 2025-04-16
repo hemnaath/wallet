@@ -10,6 +10,7 @@ const authenticateUser = passport.authenticate("jwt", { session: false });
 
 router.post('/get-balance', authenticateUser, walletController.getBalance);
 router.post('/add-balance', authenticateUser, walletValidator.validateAddBalance, walletController.addBalance);
+router.post('/convert-currency', authenticateUser, walletController.convertCurrency);
 
 
 module.exports = router;
