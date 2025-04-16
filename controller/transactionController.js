@@ -39,3 +39,13 @@ exports.withdraw = async (req, res) => {
         LOG.error('Internal server error', null, error, res, false, 500);
     }
 }
+
+exports.getTransactionHistory = async (req, res) => {
+    try{
+        const transactionHistory = await Transaction.find({ sender_wallet_id: req.user.wallet_id });
+        if (!transactionHistory) return LOG.info('No transaction history found', null, res, false, 200);
+        LOG.info('Transaction found', { transactionHistory }, res, true, 200);
+    }catch(error){
+        LOG.error('Internal server error', null, error, res, false, 500);
+    }
+}
