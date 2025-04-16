@@ -12,3 +12,7 @@ exports.validateRegister = [
         .matches(/[!@#$%^&*()]/).withMessage('Password must contain at least 1 special character'),
 ];
 
+exports.validateLogin = [
+    body('email').isEmail().withMessage('Invalid email format'),
+    body('password').notEmpty().withMessage('Password is required'),
+];
