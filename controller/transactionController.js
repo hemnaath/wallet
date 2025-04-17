@@ -1,6 +1,8 @@
 const Wallet = require('../model/walletModel');
 const Transaction = require('../model/transactionModel');
 const { validationResult } = require('express-validator');
+require('dotenv').config();
+const { getTodayTotalTransactions } = require('../helper/transactionHelper');
 
 
 exports.transfer = async (req, res) => {
@@ -12,6 +14,8 @@ exports.transfer = async (req, res) => {
         const receiverWallet = await Wallet.findById(receiverWalletId);
         if (!receiverWallet) return LOG.info('Wallet not found', null, res, false, 200);
         if (walletData.balance < amount) return LOG.info('Insufficient balance', null, res, false, 200);
+        const todayTotal = await getTodayTotalTransactions(req.user.wallet_id, 'transfer');
+        if ((todayTotal + amount) > Number(process.env.DAILY_TRANSACTION_LIMIT)) return LOG.info('Daily transaction limit exceeded', null, res, false, 200);
         walletData.balance -= amount;
         receiverWallet.balance += amount;
         await walletData.save();
@@ -31,6 +35,8 @@ exports.withdraw = async (req, res) => {
         const walletData = await Wallet.findById(req.user.wallet_id);
         if (!walletData) return LOG.info('Wallet not found', null, res, false, 200);
         if (walletData.balance < amount) return LOG.info('Insufficient balance', null, res, false, 200);
+        const todayTotal = await getTodayTotalTransactions(req.user.wallet_id, 'transfer');
+        if ((todayTotal + amount) > Number(process.env.DAILY_TRANSACTION_LIMIT)) return LOG.info('Daily transaction limit exceeded', null, res, false, 200);
         walletData.balance -= req.body.amount;
         await walletData.save();
         await Transaction.create({mode: 'withdraw', amount: req.body.amount, sender_wallet_id: req.user.wallet_id});
