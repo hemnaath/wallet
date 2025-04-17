@@ -2,7 +2,7 @@ const Wallet = require('../model/walletModel');
 const Transaction = require('../model/transactionModel');
 const { validationResult } = require('express-validator');
 require('dotenv').config();
-const { getTodayTotalTransactions } = require('../helper/transactionHelper');
+const { getTodayTotalTransactions, isSuspiciousActivity } = require('../helper/transactionHelper');
 
 
 exports.transfer = async (req, res) => {
@@ -16,6 +16,7 @@ exports.transfer = async (req, res) => {
         if (walletData.balance < amount) return LOG.info('Insufficient balance', null, res, false, 200);
         const todayTotal = await getTodayTotalTransactions(req.user.wallet_id, 'transfer');
         if ((todayTotal + amount) > Number(process.env.DAILY_TRANSACTION_LIMIT)) return LOG.info('Daily transaction limit exceeded', null, res, false, 200);
+        if (await isSuspiciousActivity(req.user.wallet_id, amount)) return LOG.info('Suspicious activity detected', null, res, false, 200);
         walletData.balance -= amount;
         receiverWallet.balance += amount;
         await walletData.save();
